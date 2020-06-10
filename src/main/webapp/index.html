@@ -2,8 +2,9 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <!-- import CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <!-- import CSS
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">-->
+    <link rel="stylesheet" href="/index.css">
 </head>
 <body>
 <div id="app" style="width: 500px;margin: auto">
@@ -12,15 +13,38 @@
 
     <el-form ref="loginForm" :model="form" :rules="rules" >
         <h3 class="login-title">请先输入个人信息</h3>
+        <div style="margin-bottom: 20px">
+            <el-select v-model="school" filterable placeholder="请选择学校" :loading="loading1">
+                <el-option
+                        v-for="item in options1"
+                        :key="item.schoolName"
+                        :label="item.schoolName"
+                        :value="item.schoolName">
+                </el-option>
+            </el-select>
+
+            <el-select v-model="classN" filterable placeholder="请选择班级" :loading="loading2">
+                <el-option
+                        v-for="item in options2"
+                        :key="item"
+                        :label="item"
+                        :value="item">
+                </el-option>
+            </el-select>
+        </div>
         <el-form-item  prop="username">
-            <el-input type="text" placeholder="请输入姓名" v-model="form.username"  clearable/>
+            <el-input type="text" placeholder="请输入学号" v-model="form.username"  clearable/>
         </el-form-item>
+
         <el-form-item prop="password">
-            <el-input type="text" placeholder="请输入学号" v-model="form.password" clearable/>
+            <el-input type="text" placeholder="请输入密码" v-model="form.password" show-password clearable/>
         </el-form-item>
+
+
     </el-form>
 
     <div style="display:inline-block;width: 80px;margin: auto;" ><el-button v-on:click="onSubmit('loginForm')" plain>开始</el-button></div>
+    <div style="display:inline-block;width: 80px;margin: auto;" ><el-button v-on:click="onSubmit2('loginForm')" plain>注册</el-button></div>
 
 </div>
 
@@ -36,10 +60,11 @@
                 </el-avatar>
                 <el-dropdown-menu slot="dropdown" >
                     <el-dropdown-item  @click.native="account()"  >
-                        <div style="font-weight: 700; " v-show="!login_show"><i class="el-icon-user-solid"></i>{{user}}</div></el-dropdown-item>
+                        <div style="font-weight: 700; " v-show="!login_show"><i class="el-icon-user-solid"></i>{{user.user}}</div></el-dropdown-item>
                     <el-dropdown-item @click.native="dosomething()" v-show="login_show">登录</el-dropdown-item>
                     <el-dropdown-item @click.native="dosomething()">返回目录</el-dropdown-item>
-                    <el-dropdown-item @click.native="account()"  v-show="!login_show">答题记录</el-dropdown-item>
+                    <el-dropdown-item @click.native="score()"  v-show="!login_show">答题记录</el-dropdown-item>
+                    <el-dropdown-item @click.native="manage()" v-show="!login_show" v-if="user.permission>0">后台管理</el-dropdown-item>
                     <el-dropdown-item @click.native="logout()"  v-show="!login_show">注销</el-dropdown-item>
                 </el-dropdown-menu>
             </el-dropdown>
@@ -66,8 +91,11 @@
 
 </body>
 
-<!-- import Vue before Element -->
-<script src="https://unpkg.com/vue/dist/vue.js"></script>
+<!-- import Vue before Element 上线时使用不带js的VUE--><!--
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+-->
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
 <!-- import JavaScript -->
 <script src="https://unpkg.com/element-ui/lib/index.js"></script>
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
@@ -78,13 +106,58 @@
     const app = new Vue({
         data() {
             return {
+                school:'',
+                classN:'',
+                loading1:true,
+                loading2:true,
                 input2: '',
                 login_show:true,
-                user:'',
+                user:{
+                    "user": "田川",
+                    "id": "201883060064",
+                    "permission": 0
+                },
                 form: {
                     username: '',
                     password: '',
+                    school: 'null',
+                    class: 'null',
                 },
+                options1: ['null',"Alabama", "Alaska", "Arizona",
+                    "Arkansas", "California", "Colorado",
+                    "Connecticut", "Delaware", "Florida",
+                    "Georgia", "Hawaii", "Idaho", "Illinois",
+                    "Indiana", "Iowa", "Kansas", "Kentucky",
+                    "Louisiana", "Maine", "Maryland",
+                    "Massachusetts", "Michigan", "Minnesota",
+                    "Mississippi", "Missouri", "Montana",
+                    "Nebraska", "Nevada", "New Hampshire",
+                    "New Jersey", "New Mexico", "New York",
+                    "North Carolina", "North Dakota", "Ohio",
+                    "Oklahoma", "Oregon", "Pennsylvania",
+                    "Rhode Island", "South Carolina",
+                    "South Dakota", "Tennessee", "Texas",
+                    "Utah", "Vermont", "Virginia",
+                    "Washington", "West Virginia", "Wisconsin",
+                    "Wyoming"],
+                options2: ['null',"Alabama", "Alaska", "Arizona",
+                    "Arkansas", "California", "Colorado",
+                    "Connecticut", "Delaware", "Florida",
+                    "Georgia", "Hawaii", "Idaho", "Illinois",
+                    "Indiana", "Iowa", "Kansas", "Kentucky",
+                    "Louisiana", "Maine", "Maryland",
+                    "Massachusetts", "Michigan", "Minnesota",
+                    "Mississippi", "Missouri", "Montana",
+                    "Nebraska", "Nevada", "New Hampshire",
+                    "New Jersey", "New Mexico", "New York",
+                    "North Carolina", "North Dakota", "Ohio",
+                    "Oklahoma", "Oregon", "Pennsylvania",
+                    "Rhode Island", "South Carolina",
+                    "South Dakota", "Tennessee", "Texas",
+                    "Utah", "Vermont", "Virginia",
+                    "Washington", "West Virginia", "Wisconsin",
+                    "Wyoming"],
+                //远端数据
                 remote_data: [
                     {
                         "test_index": 1,
@@ -97,12 +170,40 @@
                     ],
                     password: [
                         {required: true, message: '不能为空', trigger: 'blur'},
-                        { pattern:/^\d{12}$/, message: '应为12位学号', trigger: 'blur' }
                     ]
                 },
             }
         },
         methods: {
+            //查询有哪些学校
+            sch(){
+                this.loading1 = true ;
+                axios.get('/school').then(response=> {
+                    if(response.data.code===1){
+                        this.options1 = response.data.data;
+                        this.loading1=false;
+                    }
+                    else {
+                        this.$message.error(response.data.msg);
+                    }
+                });
+            },
+            //查询有哪些班级
+            cla(x){
+                const params = new URLSearchParams();
+                params.append('schoolName',x);
+                this.loading2 = true ;
+                axios.post('/class',params).then(response=> {
+                    if(response.data.code===1){
+                        this.options2 = response.data.data;
+                        this.loading2=false;
+                    }
+                    else {
+                        this.$message.error(response.data.msg);
+                    }
+                });
+            },
+            //查询有哪些试题
             cha(){
                 axios.get('/chapter').then(response=> {
                     if(response.data.code===1){
@@ -113,14 +214,19 @@
                     }
                 });
             },
+
+            //权限查询
             who(){
                 axios.get('/who').then(response=> {
                     if(response.data.code===1){
                         this.login_show = false;
-                        this.user = response.data.data.user;
+                        this.user = response.data.data;
+                        console.log(response.data.data)
                     }
                 });
             },
+
+            //注销
             logout(){
                 axios.get('/logout').then(response=> {
                     if(response.data.code===1){
@@ -135,24 +241,62 @@
                 });
 
             },
+
             account(){
                 window.location.href="account.html";
+            },
+            score(){
+                window.location.href="score.html";
             },
             dosomething(){
                 window.location.href="index.html";
             },
+            manage(){
+                window.location.href="management.html";
+            },
+
+            perSubmit(){
+                if(this.school != '' &&this.classN != '' ){
+                  this.form.school = this.school;
+                  this.form.class = this.classN;
+                }
+            },
+
+            perSubmit2(){
+                let n = this.form.password.length;
+                if(n<6||n>30){
+                    this.$message.error('密码为6-30位');
+                    return false;
+                }
+                if(this.classN =='管理员'){
+                    this.$message.error('注册管理员请联系超级管理员');
+                    return false;
+                }
+                if(this.school != '' &&this.classN != '' ){
+                    this.form.school = this.school;
+                    this.form.class = this.classN;
+                    return true
+                }
+                else{
+                    this.$message.error('选择你的班级');
+                    return false;
+                }
+            },
+            //登录表单提交
             onSubmit(formName) {
                 // 为表单绑定验证功能
                 this.$refs[formName].validate((valid) => {
                     if (valid) {
+                        this.perSubmit();
                         var params = new URLSearchParams();
                         params.append('username',this.form.username);
                         params.append('password',this.form.password);
+                        params.append('school',this.form.school);
+                        params.append('class',this.form.class);
                         axios.post('/login',  params).then(response =>{
 
                             if(response.data.code===1){
-                                this.login_show = false;
-                                this.user = this.form.username;
+                                this.who();
                                 this.$message.success('欢迎你, ' + response.data.data);
                             }
                             else {
@@ -166,15 +310,47 @@
                 });
             },
 
+            onSubmit2(formName) {
+                // 为表单绑定验证功能
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                        if(this.perSubmit2()){
+                            var params = new URLSearchParams();
+                            params.append('username',this.form.username);
+                            params.append('password',this.form.password);
+                            params.append('school',this.form.school);
+                            params.append('class',this.form.class);
+                            axios.post('/register',  params).then(response =>{
+                                if(response.data.code===1){
+                                    this.$message.success('注册成功, ' + response.data.data);
+                                }
+                                else {
+                                    this.$message.error(response.data.msg);
+                                }
+                            })
+                        }
+                    }
+                    else {
+                        this.$notify({title: '', message: '填写错误', type: 'warning'});
+                    }
+                });
+            },
+            //
         },
+
+        //
         mounted() {
 
         },
+
+        //
         created() {
             this.who();
+            this.sch();
             this.cha();
         },
 
+        //深度监听搜索框
         watch: {
             input2: {
                 deep: true,
@@ -195,8 +371,14 @@
                 }
             },
 
-        },
+            school: {
+                deep: true,
+                handler(nv, ov) {
+                    this.cla(nv);
+                }
+            },
 
+        },
 
     }).$mount('#app')
 

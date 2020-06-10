@@ -10,6 +10,10 @@ import org.springframework.data.jpa.repository.Query;
  */
 public interface QuestionDao extends JpaRepository<QuestionEntity, Integer > {
 
+    /**
+     * 返回本章（章节编号）下的所有问题答案
+     */
     @Query(nativeQuery = true, value = "select answer from information.question where `index` = ?1")
-    int[] find(int testIndex);
+    String[] find(int testIndex);
+
 }

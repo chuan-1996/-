@@ -27,6 +27,9 @@ public class ChapterController {
 
     private static final Logger logger = LoggerFactory.getLogger(TestController.class);
 
+    /**
+     * 查询有哪些试题
+     */
     @RequestMapping(value = "/chapter", method = RequestMethod.GET)
     @ResponseBody
     public ResultVo login(HttpServletRequest request) {

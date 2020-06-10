@@ -13,7 +13,23 @@ public class QuestionEntity {
     private String title;
     private int index;
     private int questionId;
-    private int answer;
+    private String answer;
+    private Integer type;
+
+    @Override
+    public String toString() {
+        return "QuestionEntity{" +
+                "a='" + a + '\'' +
+                ", b='" + b + '\'' +
+                ", c='" + c + '\'' +
+                ", d='" + d + '\'' +
+                ", title='" + title + '\'' +
+                ", index=" + index +
+                ", questionId=" + questionId +
+                ", answer='" + answer + '\'' +
+                ", type=" + type +
+                '}';
+    }
 
     @Basic
     @Column(name = "A")
@@ -66,7 +82,7 @@ public class QuestionEntity {
     }
 
     @Basic
-    @Column(name = "index")
+    @Column(name = "[index]")
     public int getIndex() {
         return index;
     }
@@ -76,23 +92,37 @@ public class QuestionEntity {
     }
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "question_id")
     public int getQuestionId() {
         return questionId;
     }
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "question_id")
     public void setQuestionId(int questionId) {
         this.questionId = questionId;
     }
 
     @Basic
     @Column(name = "answer")
-    public int getAnswer() {
+    public String getAnswer() {
         return answer;
     }
 
-    public void setAnswer(int answer) {
+    public void setAnswer(String answer) {
         this.answer = answer;
+    }
+
+    @Basic
+    @Column(name = "type")
+    public Integer getType() {
+        return type;
+    }
+
+    public void setType(Integer type) {
+        this.type = type;
     }
 
     @Override
@@ -102,16 +132,17 @@ public class QuestionEntity {
         QuestionEntity that = (QuestionEntity) o;
         return index == that.index &&
                 questionId == that.questionId &&
-                answer == that.answer &&
                 Objects.equals(a, that.a) &&
                 Objects.equals(b, that.b) &&
                 Objects.equals(c, that.c) &&
                 Objects.equals(d, that.d) &&
-                Objects.equals(title, that.title);
+                Objects.equals(title, that.title) &&
+                Objects.equals(answer, that.answer) &&
+                Objects.equals(type, that.type);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(a, b, c, d, title, index, questionId, answer);
+        return Objects.hash(a, b, c, d, title, index, questionId, answer, type);
     }
 }

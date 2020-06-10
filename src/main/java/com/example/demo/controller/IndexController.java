@@ -7,6 +7,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
  * @author qq491528074
+ * 主页跳转
  */
 @Configuration
 public class IndexController implements WebMvcConfigurer {

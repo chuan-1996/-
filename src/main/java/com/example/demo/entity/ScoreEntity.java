@@ -11,30 +11,23 @@ public class ScoreEntity {
     private int score;
     private int scoreId;
 
-    public ScoreEntity(int testIndex, String userId, int score) {
-        this.testIndex = testIndex;
-        this.userId = userId;
-        this.score = score;
-    }
-
-    public ScoreEntity() {
-    }
-
-    public ScoreEntity(int testIndex, String userId, int score, int scoreId) {
-        this.testIndex = testIndex;
-        this.userId = userId;
-        this.score = score;
-        this.scoreId = scoreId;
-    }
-
     @Basic
     @Column(name = "test_index")
     public int getTestIndex() {
         return testIndex;
     }
 
+    public ScoreEntity() {
+    }
+
     public void setTestIndex(int testIndex) {
         this.testIndex = testIndex;
+    }
+
+    public ScoreEntity(int testIndex, String userId, int score) {
+        this.testIndex = testIndex;
+        this.userId = userId;
+        this.score = score;
     }
 
     @Basic
@@ -67,6 +60,7 @@ public class ScoreEntity {
         this.scoreId = scoreId;
     }
 
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -75,7 +69,7 @@ public class ScoreEntity {
         return testIndex == that.testIndex &&
                 score == that.score &&
                 scoreId == that.scoreId &&
-                Objects.equals(userId, that.userId);
+                Objects.equals(userId, that.userId) ;
     }
 
     @Override

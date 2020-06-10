@@ -17,6 +17,16 @@ import java.util.List;
 
 public interface TestDao extends JpaRepository<TestEntity, Integer > {
 
+    /**
+     * 查找一个TestEntity实体 注意 其下的问题将不会获得
+     */
     @Query(value = "select new com.example.demo.entity.TestName(t.testIndex,t.testName) from TestEntity t")
     List<TestName> find();
+
+    /**
+     * 返回最大的章节号
+     */
+    @Query(nativeQuery = true, value = "select MAX(test_index) from information.test ")
+    int findMax();
+
 }

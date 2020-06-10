@@ -12,6 +12,22 @@ public class TestEntity {
     private String testName;
     private List<QuestionEntity> questions=new ArrayList<QuestionEntity>();
 
+    public void show(){
+        System.out.println(this.toString());
+        for(QuestionEntity i :questions){
+            System.out.println(i.toString());
+        }
+
+    }
+    @Override
+    public String toString() {
+        return "TestEntity{" +
+                "testIndex=" + testIndex +
+                ", testName='" + testName + '\'' +
+                ", questions=";
+    }
+
+
     @Id
     @Column(name = "test_index")
     public int getTestIndex() {

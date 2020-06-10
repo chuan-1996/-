@@ -35,6 +35,9 @@ public class TestController {
 
     private static final Logger logger = LoggerFactory.getLogger(TestController.class);
 
+    /**
+     * 测试用
+     */
     @RequestMapping(value = "/test", method = RequestMethod.POST)
     @ResponseBody
     public ResultVo submit(@RequestParam("index") int index,

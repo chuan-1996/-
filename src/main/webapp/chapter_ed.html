@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <!-- import CSS -->
+    <link rel="stylesheet" href="/index.css">
+</head>
+<body>
+<div id="app" style="width: 100%">
+    <div id="wraperCon">
+        <div id="newsCon">
+
+            <div class="header" style="height: 60px" >
+                章节号：{{remote_data.testIndex}}
+                <el-input style="width: 50%;!important;" v-model="remote_data.testName"></el-input>
+                <div class="rightBlock" >
+                    <el-dropdown trigger="click" >
+                        <el-avatar  class="el-dropdown-link" style="vertical-align: middle;display: inline-block;"
+                                    :size="35" icon="el-icon-user-solid">
+                        </el-avatar>
+                        <el-dropdown-menu slot="dropdown" >
+                            <el-dropdown-item  @click.native="account()"  >
+                                <div style="font-weight: 700; " v-show="!login_show"><i class="el-icon-user-solid"></i>{{user.user}}</div></el-dropdown-item>
+                            <el-dropdown-item @click.native="dosomething()" v-show="login_show">登录</el-dropdown-item>
+                            <el-dropdown-item @click.native="dosomething()">返回目录</el-dropdown-item>
+                            <el-dropdown-item @click.native="score()"  v-show="!login_show">答题记录</el-dropdown-item>
+                            <el-dropdown-item @click.native="manage()" v-show="!login_show" v-if="user.permission>0">后台管理</el-dropdown-item>
+                            <el-dropdown-item @click.native="logout()"  v-show="!login_show">注销</el-dropdown-item>
+                        </el-dropdown-menu>
+                    </el-dropdown>
+                </div>
+
+            </div>
+
+            <div class="main">
+
+                <el-form ref="form"
+                         :model="form"
+                        label-width="80px">
+                    <el-button @click.native="delete_test()" style="float: right!important;" type="danger" round>删除此套</el-button>
+                    <template v-for="(question,i) in remote_data.questions">
+                        <el-card class="box-card-wrong" shadow="hover" >
+                            问题{{ i+1 }}:
+                            <el-select v-model="question.type" placeholder="单选题" @change="changed(i+1)">
+                                <el-option
+                                        v-for="item in options"
+                                        :label="item.label"
+                                        :key="item.key"
+                                        :value="item.value">
+                                </el-option>
+                            </el-select>
+                            <el-button style="float:right;" type="danger" icon="el-icon-delete" @click="deleteB(i+1)" circle></el-button>
+                            <el-input style="width: 80%;!important;margin:20px 0;"
+                                      v-model="question.title"
+                                      type="textarea"
+                                      :autosize="{ minRows: 3, maxRows: 4}"></el-input>
+                            <br>
+                            <div id = "danxuanti" v-if="question.type ==1">
+
+                                <el-radio-group v-model="question.answer"  style="line-height: 40px!important;" >
+                                    <el-radio style="width: 100%!important;" label="1">
+                                        A. <el-input style="width: 70%;!important;" v-model="question.a"></el-input>
+                                    </el-radio>
+
+                                    <el-radio style="width: 100%!important;" label="2">
+                                        B. <el-input style="width: 70%;!important;" v-model="question.b"></el-input>
+                                    </el-radio>
+
+                                    <el-radio style="width: 100%!important;" label="3">
+                                        C. <el-input style="width: 70%;!important;" v-model="question.c"></el-input>
+                                    </el-radio>
+
+                                    <el-radio style="width: 100%!important;" label="4">
+                                        D. <el-input style="width: 70%;!important;" v-model="question.d"></el-input>
+                                    </el-radio>
+
+                                </el-radio-group>
+                            </div>
+                            <div id = "duoxuanti" v-if="question.type ==2">
+                                <el-checkbox-group v-model="question.answer"  style="line-height: 40px!important;" >
+                                    <el-checkbox style="width: 100%!important;" label="1">
+                                        A. <el-input style="width: 70%;!important;" v-model="question.a"></el-input>
+                                    </el-checkbox>
+
+                                    <el-checkbox style="width: 100%!important;" label="2">
+                                        B. <el-input style="width: 70%;!important;" v-model="question.b"></el-input>
+                                    </el-checkbox>
+
+                                    <el-checkbox style="width: 100%!important;" label="3">
+                                        C. <el-input style="width: 70%;!important;" v-model="question.c"></el-input>
+                                    </el-checkbox>
+
+                                    <el-checkbox style="width: 100%!important;" label="4">
+                                        D. <el-input style="width: 70%;!important;" v-model="question.d"></el-input>
+                                    </el-checkbox>
+
+                                </el-checkbox-group>
+                            </div>
+
+                            <div id = "panduanti" v-if="question.type ==3">
+                                <el-radio-group v-model="question.answer"  style="line-height: 40px!important;" >
+                                    <el-radio style="width: 100%!important;" label="1">正确</el-radio>
+                                    <el-radio style="width: 100%!important;" label="2">错误</el-radio>
+                                </el-radio-group>
+                            </div>
+                        </el-card>
+
+
+                    </template>
+                    <center> <el-button style="text-align: center" type="success" @click.native="addB()" round>新增题目</el-button></center>
+
+                    <el-form-item style="margin-top: 20px">
+                        <el-button  type="success" round @click="open">提交</el-button>
+                    </el-form-item>
+
+                </el-form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+</body>
+
+<!-- import Vue before Element 上线时使用不带js的VUE--><!--
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+-->
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<!-- import JavaScript -->
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+<script>
+const app = new Vue({
+    el: '#app',
+    data() {
+        return {
+            login_show: true,
+            user:{
+                "user": "田川",
+                "id": "201883060064",
+                "permission": 0
+            },
+            options: [{
+                value: 1,
+                label: '单选题'
+            }, {
+                value: 2,
+                label: '多选题'
+            }, {
+                value: 3,
+                label: '判断题'
+            }],
+
+            //push用
+            temp_question: {
+                "a": "选项",
+                "b": "选项",
+                "c": "选项",
+                "d": "选项",
+                "title": "问题描述",
+                "index": 0,
+                "questionId": 0,
+                "answer":[],
+                "type":1,
+            },
+            /*后端发来的数据*/
+            remote_data_remote: {
+                testIndex: 0,
+                testName: '章名',
+                questions: [
+                ],
+            },
+
+            /*展示数据*/
+            remote_data: {
+                testIndex: 0,
+                testName: '章名',
+                questions: [
+                ],
+            },
+
+            /*发往后端的数据*/
+            form: {
+                testIndex: 1,
+                testName: '章名',
+                questions: [],
+            }
+        };
+    },
+    created() {
+        this.who();
+        this.handleRemoteData();
+    },
+    methods: {
+
+        //URL参数提取
+        getQueryVariable(variable)
+        {
+            var query = window.location.search.substring(1);
+            var vars = query.split("&");
+            for (var i=0;i<vars.length;i++) {
+                var pair = vars[i].split("=");
+                if(pair[0] == variable){return pair[1];}
+            }
+            return false;
+        },
+
+        //远端数据请求
+        handleRemoteData(){
+            let params = new URLSearchParams();
+            let i = this.getQueryVariable("index");
+            params.append('index',i);
+            axios.post('/question_withA' , params).then(response=> {
+                if(response.data.code===1){
+                    this.remote_data_remote = response.data.data;
+                    this.remote_data = response.data.data;
+                    this.temp_question.index = i;
+                    this.afterHandle();
+
+                }else {
+                    this.$message.error(response.data.msg);
+                }
+            });
+        },
+
+        //远端数据请求后置处理 将多选题行如'134'的答案转化为['1','3','4']
+        afterHandle(){
+            let n = this.remote_data.questions.length;
+            for(let i =0; i< n; ++i){
+                if(this.remote_data.questions[i].type === 2){
+                    this.remote_data.questions[i].answer = this.remote_data.questions[i].answer.split("");
+                }
+            }
+        },
+
+        //题目类型变更时
+        changed(x) {
+            this.remote_data.questions[x-1].answer=[];
+        },
+
+        deepClone(obj) {
+            const _obj = JSON.stringify(obj);
+            return JSON.parse(_obj);
+        },
+
+        deleteB(x){
+            console.log(x);
+            let n = this.remote_data.questions.length;
+            for (let i = 0; i < n; i++) {
+                if(i === this.remote_data.questions.length){
+                    break;
+                }
+                if(i === x-1){
+                    this.remote_data.questions.splice(i, 1);
+                    if(n===1)break;
+                }
+            }
+        },
+
+        addB(){
+            this.remote_data.questions.push(this.deepClone(this.temp_question));
+        },
+
+        //处理表单 多选题行如['1','3','4']的答案转化为'134'
+        //把数据添加到form等待提交
+        handleResult(){
+            this.form.questions = [];
+            let temp;
+
+            for(let i=0;i<this.remote_data.questions.length;i++){
+                if(this.remote_data.questions[i].type === 2){//多选题
+                    this.remote_data.questions[i].answer.sort();
+                    temp = this.remote_data.questions[i].answer.join("");
+                }
+                else{
+                    temp = this.remote_data.questions[i].answer;
+                }
+                this.form.questions.push(this.remote_data.questions[i]);
+                this.form.questions[i].answer=temp;
+            }
+
+            this.form.testIndex = this.remote_data_remote.testIndex;
+            this.form.testName = this.remote_data_remote.testName;
+        },
+
+
+        who(){
+            axios.get('/who').then(response=> {
+                if(response.data.code===1){
+                    this.login_show = false;
+                    this.user = response.data.data;
+                }
+                else {
+                    this.$message.error("登录超时！");
+                    this.dosomething();
+                }
+            });
+        },
+
+        logout(){
+            axios.get('/logout').then(response=> {
+                if(response.data.code===1){
+                    this.login_show = false;
+                    this.user = '';
+                    window.location.href="index.html";
+
+                }
+                else {
+                    this.$message.error(response.data.msg);
+                }
+            });
+
+        },
+        account(){
+            window.location.href="account.html";
+        },
+        score(){
+            window.location.href="score.html";
+        },
+        dosomething(){
+            window.location.href="index.html";
+        },
+        manage(){
+            window.location.href="management.html";
+        },
+        delete_test(){
+            let that = this;
+            this.$confirm('此操作将删除此试题,该操作不可逆！是否继续?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+                that.onDelete();
+            }).catch(() => {
+                this.$message({
+                    type: 'info',
+                    message: '已取消'
+                });
+            });
+        },
+        onDelete() {
+            let params = new URLSearchParams();
+            params.append("index",this.remote_data_remote.testIndex);
+            axios.post('/delete_test',params)
+                .then(response =>{
+                    if(response.data.code===1){
+                        this.$message.success(response.data.msg);
+                        window.setTimeout(this.manage(),1500);
+                    }
+                    else {
+                        this.$message.error(response.data.msg);
+                    }
+                })
+        },
+        /*submit confirm*/
+        open() {
+            let that = this;
+            let rest = 0;
+            for(let i=0; i<this.remote_data.questions.length; i++){
+                if(JSON.stringify(this.remote_data.questions[i].answer) === '[]'){
+                    rest++;
+                }
+            }
+
+            if(rest===0){
+                this.$confirm('此操作将上传试题,是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    that.onSubmit();
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消'
+                    });
+                });
+            }
+            else{
+                this.$message({
+                    type: 'error',
+                    message: '还有问题的答案没有设置'
+                });
+            }
+        },
+
+        //提交逻辑
+        onSubmit() {
+            this.handleResult();
+            let params = new URLSearchParams();
+            let utf8 = JSON.stringify(this.form);
+            params.append("utf8",utf8);
+            /*axios({
+                method: 'post',
+                url: '/question_add',
+                headers: {
+                    'Content-type': 'application/json;charset=UTF-8'
+                },
+                data:utf8,
+            })*/
+            axios.post('/question_edit',params)
+            .then(response =>{
+                if(response.data.code===1){
+                    this.$message.success(response.data.msg);
+                    window.setTimeout(this.manage(),1500);
+                }
+                else {
+                    this.$message.error(response.data.msg);
+                    window.setTimeout(this.manage(),1500);
+                }
+            })
+        },
+    }
+
+}).$mount('#app')
+
+
+</script>
+
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+    }
+    #app{
+        background-size: 100%;
+       /*background-image: url("");*/
+        background-attachment: fixed;
+
+    }
+    .rightBlock{
+    float: right;
+    line-height: 60px;
+    display:block;
+    margin-right: 0;
+    height: 60px;
+    }
+    .rightBlock:focus{
+    outline:none;
+    }
+
+    #wraperCon {
+        width: 1024px;
+        margin: 0 auto;
+        position: relative;
+        background: url('/static/con-bg.png') repeat-y 50% 0;
+
+    }
+
+    #newsCon {
+        width: 840px;
+        margin: 0 auto;
+        overflow: hidden;
+        font-size: 15px;
+        padding-top: 20px;
+    }
+
+    .box-card-wrong {
+        margin: 8px auto;
+        width: 760px;
+
+    }
+
+    .el-card, .el-message {
+        border-radius: 18px!important;
+        overflow: hidden;
+    }
+
+</style>
+</html>

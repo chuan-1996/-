@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <!-- import CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="/index.css">
 </head>
 <body>
-<div id="app" style="width: 500px;margin: auto">
+<div id="app" style="width: 90%;margin: auto">
 
 <div v-show="!login_show" class="main-nav">
     <div class="header" style="height: 60px">
-        <h3 style="float:left">目录</h3>
+        <h3 style="float:left">账号信息</h3>
         <div class="rightBlock" >
 
             <el-dropdown trigger="click" >
@@ -19,10 +19,11 @@
                 </el-avatar>
                 <el-dropdown-menu slot="dropdown" >
                     <el-dropdown-item  @click.native="account()"  >
-                        <div style="font-weight: 700; " v-show="!login_show"><i class="el-icon-user-solid"></i>{{user}}</div></el-dropdown-item>
+                        <div style="font-weight: 700; " v-show="!login_show"><i class="el-icon-user-solid"></i>{{user.user}}</div></el-dropdown-item>
                     <el-dropdown-item @click.native="dosomething()" v-show="login_show">登录</el-dropdown-item>
                     <el-dropdown-item @click.native="dosomething()">返回目录</el-dropdown-item>
-                    <el-dropdown-item @click.native="account()"  v-show="!login_show">答题记录</el-dropdown-item>
+                    <el-dropdown-item @click.native="score()"  v-show="!login_show">答题记录</el-dropdown-item>
+                    <el-dropdown-item @click.native="manage()" v-show="!login_show" v-if="user.permission>0">后台管理</el-dropdown-item>
                     <el-dropdown-item @click.native="logout()"  v-show="!login_show">注销</el-dropdown-item>
                 </el-dropdown-menu>
             </el-dropdown>
@@ -30,21 +31,78 @@
     </div>
 
     <div class="nav-group__title searchParam">
+
+        <el-form ref="form" :model="form" :rules="rules" label-width="120px" size="medium">
+
+            <el-form-item  label="姓名" label-position="top" >
+                <el-col :span="8">
+                <el-input v-model="user.user" ></el-input>
+                </el-col>
+            </el-form-item>
+
+            <el-form-item>
+                <el-button plain @click="name()">修改姓名</el-button>
+            </el-form-item>
+
+            <el-form-item  label="旧密码" label-position="top" prop="oldPassword">
+                <el-col :span="8">
+                <el-input v-model="form.oldPassword" show-password></el-input>
+                </el-col>
+            </el-form-item>
+
+            <el-form-item  label="新密码" prop="password1">
+                <el-col :span="8">
+                <el-input v-model="form.password1" show-password></el-input>
+                </el-col>
+            </el-form-item>
+
+            <el-form-item label="重复输入新密码" prop="password2">
+                <el-col :span="8">
+                <el-input v-model="form.password2" show-password></el-input>
+                </el-col>
+            </el-form-item>
+
+            <el-form-item>
+                <el-button plain @click="password()">修改密码</el-button>
+            </el-form-item>
+
+        </el-form>
+
         <template>
             <el-table
-                    :data="remote_data">
+                    :data="table">
                 <el-table-column
-                        prop="testIndex"
-                        label="章节号"
-                        width="180">
+                        prop="user"
+                        label="姓名"
+                        width="150">
                 </el-table-column>
+
                 <el-table-column
-                        prop="score"
-                        label="得分"
-                        width="180">
+                        prop="id"
+                        label="学号"
+                        width="150">
+                </el-table-column>
+
+                <el-table-column
+                        prop="permission"
+                        label="权限级别"
+                        width="150">
+                </el-table-column>
+
+                <el-table-column
+                        prop="school"
+                        label="学校"
+                        width="150">
+                </el-table-column>
+
+                <el-table-column
+                        prop="clazz"
+                        label="班级"
+                        width="150">
                 </el-table-column>
 
             </el-table>
+            <el-button type="danger" plain @click="name2()">永久删除本账号的所有数据</el-button>
         </template>
     </div>
 </div>
@@ -53,8 +111,11 @@
 
 </body>
 
-<!-- import Vue before Element -->
-<script src="https://unpkg.com/vue/dist/vue.js"></script>
+<!-- import Vue before Element 上线时使用不带js的VUE--><!--
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+-->
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
 <!-- import JavaScript -->
 <script src="https://unpkg.com/element-ui/lib/index.js"></script>
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
@@ -64,39 +125,143 @@
 
     const app = new Vue({
         data() {
+            var check1 = (rule, value, callback) => {
+                if (!value) {
+                    return callback(new Error('不能为空'));
+                }else {
+                    callback();
+                }
+            };
+            var validatePass = (rule, value, callback) => {
+                if (value === '') {
+                    callback(new Error('请输入密码'));
+                }else if (value === this.form.oldPassword) {
+                    callback(new Error('不能与旧密码相同!'));
+                }else if (value.length>30||value.length<6) {
+                    callback(new Error('密码需要6-30位'));
+                }
+                else {
+                    callback();
+                }
+            };
+            var validatePass2 = (rule, value, callback) => {
+                if (value === '') {
+                    callback(new Error('请再次输入密码'));
+                } else if (value !== this.form.password1) {
+                    callback(new Error('两次输入密码不一致!'));
+                } else {
+                    callback();
+                }
+            };
             return {
+                form: {
+                    oldPassword:'',
+                    password1: '',
+                    password2: ''
+                },
+                rules: {
+                    password1: [
+                        { validator: validatePass, trigger: 'blur' }
+                    ],
+                    password2: [
+                        { validator: validatePass2, trigger: 'blur' }
+                    ],
+                    oldPassword: [
+                        { validator: check1, trigger: 'blur' }
+                    ]
+                },
+                //登录状态 true为未登录
                 login_show:true,
-                user:'',
+                //用户名
+                table:[],
+                user:{
+                    "user": "田川",
+                    "id": "201883060064",
+                    "permission": 0,
+                    "school": "null",
+                    "clazz": "null"
+                },
 
-                remote_data: [
-                    {
-                        "testIndex": 0,
-                        "userId": "0",
-                        "score":0,
-                        "scoreId": 0
-                    }
-                ],
             }
         },
         methods: {
-            score(){
-                axios.get('/score').then(response=> {
-                    if(response.data.code===1){
-                        this.remote_data = response.data.data;
-                    }
-                    else {
-                        this.$message.error(response.data.msg);
-                    }
+            name2(){
+                this.$confirm('此操作将永久删除本账号的所有数据,是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    axios.get('/d')
+                        .then(response=>{
+                            if(response.data.code===1){
+                                this.$message.success(response.data.msg);
+                                window.setTimeout(this.dosomething(),5000);
+                            }
+                            else {
+                                this.$message.error(response.data.msg);
+                            }
+                        });
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消'
+                    });
                 });
+
+            },
+            password(){
+                this.$refs.form.validate((valid) => {
+                if (valid) {
+                    let params = new URLSearchParams();
+                    params.append("id", this.user.id);
+                    params.append("password", this.form.oldPassword);
+                    params.append("password1", this.form.password1);
+                    axios.post('/edit_password', params)
+                        .then(response => {
+                            if (response.data.code === 1) {
+                                this.$message.success(response.data.msg);
+                                window.setTimeout(this.dosomething(), 1500);
+                            } else {
+                                this.$message.error(response.data.msg);
+                            }
+                        })
+                    }
+                })
+            },
+            name(){
+                let n = this.user.user.length;
+                if(n<2||n>10){
+                    this.$message.error("2-10位");
+                }else{
+                    let params = new URLSearchParams();
+                    params.append("name",this.user.user);
+                    params.append("id",this.user.id);
+                    axios.post('/edit_name',params)
+                        .then(response =>{
+                            if(response.data.code===1){
+                                this.$message.success(response.data.msg);
+                                window.setTimeout(this.dosomething(),1500);
+                            }
+                            else {
+                                this.$message.error(response.data.msg);
+                            }
+                        })
+                }
             },
             who(){
                 axios.get('/who').then(response=> {
                     if(response.data.code===1){
                         this.login_show = false;
-                        this.user = response.data.data.user;
+                        this.user = response.data.data;
+                        this.table.push(this.user);
+                    }
+                    else{
+                        this.$message.error("登录超时！");
+                        this.dosomething();
                     }
                 });
             },
+
             logout(){
                 axios.get('/logout').then(response=> {
                     if(response.data.code===1){
@@ -111,45 +276,25 @@
                 });
 
             },
+
             account(){
                 window.location.href="account.html";
+            },
+            score(){
+                window.location.href="score.html";
             },
             dosomething(){
                 window.location.href="index.html";
             },
-
-        },
-        mounted() {
-
-        },
-        created() {
-            this.who();
-            this.score();
-        },
-
-        watch: {
-            input2: {
-                deep: true,
-                handler(nv, ov) {
-                    var list = document.getElementsByClassName('nav-item');
-                    for(var i = 0; i < list.length; ++i){
-                        var text =list[i].innerHTML.split('>')[1].split('<')[0];
-                        //console.log(i+text);
-                        if(text.toLowerCase().indexOf(this.input2.toLowerCase()) !== -1){
-                            list[i].style.display='block';
-                        }
-                        else {
-                            list[i].style.display='none';
-                        }
-                    }
-
-                    var list2 = document.getElementsByClassName('searchParam');
-
-                }
+            manage(){
+                window.location.href="management.html";
             },
 
         },
 
+        created() {
+            this.who();
+        },
 
     }).$mount('#app')
 
