@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <!-- import CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+</head>
+<body>
+<div id="app" style="width: 100%">
+    <div id="wraperCon">
+        <div id="newsCon">
+
+            <div class="header" style="height: 60px" >
+                <h3 style="float:left">{{remote_data.testName}}</h3>
+                <div class="rightBlock" >
+                    <el-dropdown trigger="click" >
+                        <el-avatar  class="el-dropdown-link" style="vertical-align: middle;display: inline-block;"
+                                    :size="35" icon="el-icon-user-solid">
+                        </el-avatar>
+                        <el-dropdown-menu slot="dropdown" >
+                            <el-dropdown-item  @click.native="account()" >
+                                <div style="font-weight: 700; " v-show="!login_show"><i class="el-icon-user-solid"></i>{{user}}</div></el-dropdown-item>
+                            <el-dropdown-item @click.native="dosomething()" v-show="login_show">登录</el-dropdown-item>
+                            <el-dropdown-item @click.native="dosomething()">返回目录</el-dropdown-item>
+                            <el-dropdown-item @click.native="account()"  v-show="!login_show">答题记录</el-dropdown-item>
+                            <el-dropdown-item @click.native="logout()" v-show="!login_show">注销</el-dropdown-item>
+                        </el-dropdown-menu>
+                    </el-dropdown>
+                </div>
+
+            </div>
+
+            <div class="main">
+                <el-form ref="form"
+                        :model="form"
+                        label-width="80px">
+                        <template v-for="question in remote_data.questions">
+                        <el-card class="box-card-wrong" shadow="hover">
+                            <el-form-item>{{question.title}}</el-form-item>
+                            <el-form-item>
+                                <el-radio-group v-model="question.answer"  style="line-height: 40px!important;" >
+                                    <el-radio style="width: 100%!important;" label="1">A. {{question.a}}</el-radio>
+                                    <el-radio style="width: 100%!important;" label="2">B. {{question.b}}</el-radio>
+                                    <el-radio style="width: 100%!important;" label="3">C. {{question.c}}</el-radio>
+                                    <el-radio style="width: 100%!important;" label="4">D. {{question.d}}</el-radio>
+                                </el-radio-group>
+                            </el-form-item>
+                        </el-card>
+                    </template>
+
+
+                    <el-form-item style="margin-top: 20px">
+                        <el-button  type="success" round @click="open">提交</el-button>
+                    </el-form-item>
+
+                </el-form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+</body>
+
+<!-- import Vue before Element -->
+<script src="https://unpkg.com/vue/dist/vue.js"></script>
+<!-- import JavaScript -->
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+<script >
+
+const app = new Vue({
+    el: '#app',
+    data() {
+        return {
+            login_show: true,
+            user: '',
+            test_index:1,
+            remote_data: {
+                testIndex: 1,
+                testName: '章名',
+                questions: [
+                    {
+                        "a": "选项",
+                        "b": "选项",
+                        "c": "选项",
+                        "d": "选项",
+                        "title": "问题",
+                        "index": 1,
+                        "questionId": 1,
+                        "answer":0,
+                    },
+                ],
+        },
+            form: {
+                resource: [],
+                index:1
+            }
+        };
+    },
+    created() {
+        this.who();
+        this.handleData();
+    },
+    methods: {
+        getQueryVariable(variable)
+        {
+            var query = window.location.search.substring(1);
+            var vars = query.split("&");
+            for (var i=0;i<vars.length;i++) {
+                var pair = vars[i].split("=");
+                if(pair[0] == variable){return pair[1];}
+            }
+            return false;
+        },
+        handleData(){
+            var params = new URLSearchParams();
+            params.append('index',this.getQueryVariable("index"));
+            axios.post('/question' , params).then(response=> {
+                if(response.data.code===1){
+                    this.remote_data = response.data.data;
+                }else {
+                    this.$message.error(response.data.msg);
+                }
+            });
+        },
+
+        /*preHandel submit*/
+        handleResult(){
+            this.form.resource = [];
+            for(var i=0;i<this.remote_data.questions.length;i++){
+                this.form.resource.push(this.remote_data.questions[i].answer);
+            }
+        },
+
+        /*request who am i*/
+        who(){
+            axios.get('/who').then(response=> {
+                if(response.data.code===1){
+                    this.login_show = false;
+                    this.user = response.data.data.user;
+                }else {
+                    this.$message.error("登录超时！");
+                    this.dosomething();
+                }
+            });
+        },
+
+        logout(){
+            axios.get('/logout').then(response=> {
+                if(response.data.code===1){
+                    this.login_show = false;
+                    this.user = '';
+                    window.location.href="index.html";
+
+                }
+                else {
+                    this.$message.error(response.data.msg);
+                }
+            });
+
+        },
+
+        /*back to index*/
+        dosomething(){
+            window.location.href="index.html";
+        },
+
+        /*submit confirm*/
+        open() {
+            let that = this;
+            let rest = 0;
+            for(var i=0;i<this.remote_data.questions.length;i++){
+                if(this.remote_data.questions[i].answer==0){
+                    rest++;
+                }
+            }
+            if(rest==0){
+                this.$confirm('此操作将上传成绩, 只能提交一次,是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    that.onSubmit();
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消'
+                    });
+                });
+            }
+            else{
+                this.$message({
+                    type: 'error',
+                    message: '还没做完'
+                });
+            }
+        },
+
+
+        onSubmit() {
+            this.handleResult();
+            var params = new URLSearchParams();
+            params.append('form',this.form.resource);
+            params.append('index',this.form.index);
+            axios.post('/result_submit',  params).then(response =>{
+                if(response.data.code===1){
+                    this.$message.success(response.data.msg);
+                    console.log(response.data.data);
+                    var list1 = document.getElementsByClassName('box-card-wrong');
+                    for(var i=0;i<response.data.data.length;i++){
+                        list1[response.data.data[i]-1].style="border: 5px solid red;";
+                    }
+                }
+                else {
+                    this.$message.error(response.data.msg);
+                }
+            })
+        }
+    }
+
+}).$mount('#app')
+
+
+</script>
+
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+    }
+    #app{
+        background-size: 100%;
+       /*background-image: url("");*/
+        background-attachment: fixed;
+
+    }
+    .rightBlock{
+    float: right;
+    line-height: 60px;
+    display:block;
+    margin-right: 0;
+    height: 60px;
+    }
+    .rightBlock:focus{
+    outline:none;
+    }
+
+    #wraperCon {
+        width: 1024px;
+        margin: 0 auto;
+        position: relative;
+        background: url('/static/con-bg.png') repeat-y 50% 0;
+
+    }
+
+    #newsCon {
+        width: 840px;
+        margin: 0 auto;
+        overflow: hidden;
+        font-size: 15px;
+        padding-top: 20px;
+    }
+
+    .box-card-wrong {
+        margin: 8px auto;
+        width: 760px;
+
+    }
+
+    .el-card, .el-message {
+        border-radius: 18px!important;
+        overflow: hidden;
+    }
+
+</style>
+</html>

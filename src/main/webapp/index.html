@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <!-- import CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+</head>
+<body>
+<div id="app" style="width: 500px;margin: auto">
+
+<div v-show="login_show" class="login-box">
+
+    <el-form ref="loginForm" :model="form" :rules="rules" >
+        <h3 class="login-title">请先输入个人信息</h3>
+        <el-form-item  prop="username">
+            <el-input type="text" placeholder="请输入姓名" v-model="form.username"  clearable/>
+        </el-form-item>
+        <el-form-item prop="password">
+            <el-input type="text" placeholder="请输入学号" v-model="form.password" clearable/>
+        </el-form-item>
+    </el-form>
+
+    <div style="display:inline-block;width: 80px;margin: auto;" ><el-button v-on:click="onSubmit('loginForm')" plain>开始</el-button></div>
+
+</div>
+
+
+<div v-show="!login_show" class="main-nav">
+    <div class="header" style="height: 60px">
+        <h3 style="float:left">目录</h3>
+        <div class="rightBlock" >
+
+            <el-dropdown trigger="click" >
+                <el-avatar  class="el-dropdown-link" style="vertical-align: middle;display: inline-block;"
+                            :size="35" icon="el-icon-user-solid">
+                </el-avatar>
+                <el-dropdown-menu slot="dropdown" >
+                    <el-dropdown-item  @click.native="account()"  >
+                        <div style="font-weight: 700; " v-show="!login_show"><i class="el-icon-user-solid"></i>{{user}}</div></el-dropdown-item>
+                    <el-dropdown-item @click.native="dosomething()" v-show="login_show">登录</el-dropdown-item>
+                    <el-dropdown-item @click.native="dosomething()">返回目录</el-dropdown-item>
+                    <el-dropdown-item @click.native="account()"  v-show="!login_show">答题记录</el-dropdown-item>
+                    <el-dropdown-item @click.native="logout()"  v-show="!login_show">注销</el-dropdown-item>
+                </el-dropdown-menu>
+            </el-dropdown>
+        </div>
+    </div>
+
+    <el-input
+            style="width: 500px!important;"
+            placeholder="搜索"
+            prefix-icon="el-icon-search"
+            v-model="input2">
+    </el-input>
+
+    <div class="nav-group__title searchParam">目录
+        <ul class="pure-menu-list" >
+            <template v-for="chapter in remote_data">
+                <li class="nav-item"><a :href="'/chapter.html?index='+chapter.test_index" >{{chapter.test_name}}</a></li>
+            </template>
+        </ul>
+    </div>
+</div>
+
+</div>
+
+</body>
+
+<!-- import Vue before Element -->
+<script src="https://unpkg.com/vue/dist/vue.js"></script>
+<!-- import JavaScript -->
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+
+<script type="module">
+
+    const app = new Vue({
+        data() {
+            return {
+                input2: '',
+                login_show:true,
+                user:'',
+                form: {
+                    username: '',
+                    password: '',
+                },
+                remote_data: [
+                    {
+                        "test_index": 1,
+                        "test_name": "第一章"
+                    },
+                ],
+                rules: {
+                    username: [
+                        {required: true, message: '不能为空', trigger: 'blur'}
+                    ],
+                    password: [
+                        {required: true, message: '不能为空', trigger: 'blur'},
+                        { pattern:/^\d{12}$/, message: '应为12位学号', trigger: 'blur' }
+                    ]
+                },
+            }
+        },
+        methods: {
+            cha(){
+                axios.get('/chapter').then(response=> {
+                    if(response.data.code===1){
+                        this.remote_data = response.data.data;
+                    }
+                    else {
+                        this.$message.error(response.data.msg);
+                    }
+                });
+            },
+            who(){
+                axios.get('/who').then(response=> {
+                    if(response.data.code===1){
+                        this.login_show = false;
+                        this.user = response.data.data.user;
+                    }
+                });
+            },
+            logout(){
+                axios.get('/logout').then(response=> {
+                    if(response.data.code===1){
+                        this.login_show = false;
+                        this.user = '';
+                        window.location.href="index.html";
+
+                    }
+                    else {
+                        this.$message.error(response.data.msg);
+                    }
+                });
+
+            },
+            account(){
+                window.location.href="account.html";
+            },
+            dosomething(){
+                window.location.href="index.html";
+            },
+            onSubmit(formName) {
+                // 为表单绑定验证功能
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                        var params = new URLSearchParams();
+                        params.append('username',this.form.username);
+                        params.append('password',this.form.password);
+                        axios.post('/login',  params).then(response =>{
+
+                            if(response.data.code===1){
+                                this.login_show = false;
+                                this.user = this.form.username;
+                                this.$message.success('欢迎你, ' + response.data.data);
+                            }
+                            else {
+                                this.$message.error(response.data.msg);
+                            }
+                        })
+                    }
+                    else {
+                        this.$notify({title: '', message: '填写错误', type: 'warning'});
+                    }
+                });
+            },
+
+        },
+        mounted() {
+
+        },
+        created() {
+            this.who();
+            this.cha();
+        },
+
+        watch: {
+            input2: {
+                deep: true,
+                handler(nv, ov) {
+                    var list = document.getElementsByClassName('nav-item');
+                    for(var i = 0; i < list.length; ++i){
+                        var text =list[i].innerHTML.split('>')[1].split('<')[0];
+                        //console.log(i+text);
+                        if(text.toLowerCase().indexOf(this.input2.toLowerCase()) !== -1){
+                            list[i].style.display='block';
+                        }
+                        else {
+                            list[i].style.display='none';
+                        }
+                    }
+
+
+                }
+            },
+
+        },
+
+
+    }).$mount('#app')
+
+
+</script>
+<style>
+    .main-nav ul {
+        padding: 0;
+        margin: 0;
+        overflow: hidden;
+    }
+    .main-nav {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+    }
+    .main-nav .nav-item a {
+        text-decoration: none;
+        display: block;
+        color: #444;
+        line-height: 40px;
+        font-size: 14px;
+        overflow: hidden;
+        white-space: nowrap;
+        font-weight: 300;
+        transition:0.15s ease-out;
+    }
+    .main-nav .nav-item a:hover {
+        color: #409EFF;
+    }
+    .main-nav .nav-group__title {
+        font-size: 16px;
+        color: #333;
+        line-height: 26px;
+        margin-top: 15px;
+    }
+    .pure-menu-list .nav-item{
+        display: block;
+    }
+    .login-title {
+        text-align: center;
+        margin: 0 auto 40px auto;
+        color: #303133;
+
+    }
+    .login-box {
+        height: auto;
+        font-size: 12px;
+        text-align: center;
+        width: 250px;
+        padding:40px;
+        min-width: 200px;
+        margin: auto;
+    }
+
+    .login-box a{
+        text-decoration: none;
+        color: #666;
+        cursor: pointer;
+    }
+
+    .login-box a{
+        transition:0.15s ease-out;
+        color: rgb(0,0,238);
+        line-height: 40px;
+        text-decoration: none;
+        font-weight: 400;
+    }
+
+    .login-box a:hover{
+        color: #409EFF;
+    }
+
+    .login-box .icon{
+        cursor: pointer;
+        font-size: 30px;
+        margin: 20px 20px 0 20px;
+        transition: 1s all;
+    }
+
+    .login-box .icon:hover{
+        font-size: 40px;
+    }
+
+
+
+    .rightBlock{
+        float: right;
+        line-height: 60px;
+        display:block;
+        margin-right: 0;
+        height: 60px;
+    }
+    .rightBlock:focus{
+        outline:none;
+    }
+
+
+
+</style>
+</html>
