@@ -7,9 +7,20 @@ import java.util.Objects;
 @Table(name = "classs", schema = "information", catalog = "")
 public class ClasssEntity {
     private String className;
-    private String schoolName;
 
-    @Id
+    public ClasssEntity() {
+    }
+
+    private String schoolName;
+    private int classscol;
+
+    public ClasssEntity(String className, String schoolName) {
+        this.className = className;
+        this.schoolName = schoolName;
+        this.classscol=0;
+    }
+
+    @Basic
     @Column(name = "class_name")
     public String getClassName() {
         return className;
@@ -17,14 +28,6 @@ public class ClasssEntity {
 
     public void setClassName(String className) {
         this.className = className;
-    }
-
-    public ClasssEntity(String className, String schoolName) {
-        this.className = className;
-        this.schoolName = schoolName;
-    }
-
-    public ClasssEntity() {
     }
 
     @Basic
@@ -37,17 +40,28 @@ public class ClasssEntity {
         this.schoolName = schoolName;
     }
 
+    @Id
+    @Column(name = "classscol")
+    public int getClassscol() {
+        return classscol;
+    }
+
+    public void setClassscol(int classscol) {
+        this.classscol = classscol;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ClasssEntity that = (ClasssEntity) o;
-        return Objects.equals(className, that.className) &&
+        return classscol == that.classscol &&
+                Objects.equals(className, that.className) &&
                 Objects.equals(schoolName, that.schoolName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(className, schoolName);
+        return Objects.hash(className, schoolName, classscol);
     }
 }

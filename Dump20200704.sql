@@ -25,10 +25,11 @@ DROP TABLE IF EXISTS `classs`;
 CREATE TABLE `classs` (
   `class_name` varchar(44) NOT NULL,
   `school_name` varchar(45) NOT NULL,
-  PRIMARY KEY (`class_name`),
+  `classscol` int(11) NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`classscol`),
   KEY `class_school_idx` (`school_name`),
   CONSTRAINT `class_school` FOREIGN KEY (`school_name`) REFERENCES `school` (`school_name`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -37,7 +38,7 @@ CREATE TABLE `classs` (
 
 LOCK TABLES `classs` WRITE;
 /*!40000 ALTER TABLE `classs` DISABLE KEYS */;
-INSERT INTO `classs` VALUES ('硕研软件工程2018-2','山东科技大学'),('管理员','山东科技大学');
+INSERT INTO `classs` VALUES ('硕研软件工程2018-2','山东科技大学',1),('管理员','山东科技大学',2),('管理员','1',3);
 /*!40000 ALTER TABLE `classs` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -93,7 +94,7 @@ CREATE TABLE `school` (
 
 LOCK TABLES `school` WRITE;
 /*!40000 ALTER TABLE `school` DISABLE KEYS */;
-INSERT INTO `school` VALUES ('山东科技大学');
+INSERT INTO `school` VALUES ('1'),('山东科技大学');
 /*!40000 ALTER TABLE `school` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -163,9 +164,7 @@ CREATE TABLE `user` (
   `password` varchar(40) NOT NULL DEFAULT '123456',
   `school` varchar(45) NOT NULL DEFAULT 'null',
   `class` varchar(45) NOT NULL DEFAULT 'null',
-  PRIMARY KEY (`id`),
-  KEY `user_class_idx` (`class`),
-  CONSTRAINT `user_class` FOREIGN KEY (`class`) REFERENCES `classs` (`class_name`) ON DELETE CASCADE ON UPDATE CASCADE
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -175,7 +174,7 @@ CREATE TABLE `user` (
 
 LOCK TABLES `user` WRITE;
 /*!40000 ALTER TABLE `user` DISABLE KEYS */;
-INSERT INTO `user` VALUES ('admin','000000000000',3,'000000000000','山东科技大学','管理员'),('未设置','123123123',0,'123123123','山东科技大学','硕研软件工程2018-2'),('我1','123456',0,'1234564','山东科技大学','硕研软件工程2018-2'),('田川','201883060064',1,'123456','山东科技大学','硕研软件工程2018-2');
+INSERT INTO `user` VALUES ('admin','000000000000',3,'000000000000','山东科技大学','管理员'),('未设置','123123123',2,'123123123','1','管理员'),('我1','123456',0,'1234564','山东科技大学','硕研软件工程2018-2'),('田川','201883060064',1,'123456','山东科技大学','硕研软件工程2018-2');
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -188,4 +187,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-07-03 22:22:21
+-- Dump completed on 2020-07-04 11:56:19

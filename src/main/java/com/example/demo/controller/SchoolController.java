@@ -4,7 +4,6 @@ import com.example.demo.common.Param;
 import com.example.demo.dao.*;
 import com.example.demo.entity.ClasssEntity;
 import com.example.demo.entity.SchoolEntity;
-import com.example.demo.entity.ScoreEntity;
 import com.example.demo.entity.UserEntity;
 import com.example.demo.utils.isEmpty;
 import com.example.demo.vo.ResultVo;
@@ -20,8 +19,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import javax.swing.text.html.Option;
-import java.nio.channels.ClosedSelectorException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -139,7 +136,8 @@ public class SchoolController {
                            HttpServletRequest request) {
         UserEntity a = (UserEntity) request.getSession().getAttribute(Param.user);
         if(a.getPermission()>1){
-            Optional<ClasssEntity> b = classDao.findById(id);
+            Example<ClasssEntity> c = Example.of(new ClasssEntity(id,a.getSchool()));
+            Optional<ClasssEntity> b = classDao.findOne(c);
             if(b.isPresent()){
                 return new ResultVo(0,"该班级已存在",null);
             }
@@ -156,7 +154,7 @@ public class SchoolController {
 
     }
     /**
-     * 添加班级
+     * 删除班级
      */
     @RequestMapping(value = "/d_c", method = RequestMethod.POST)
     @ResponseBody
@@ -164,9 +162,10 @@ public class SchoolController {
                            HttpServletRequest request) {
         UserEntity a = (UserEntity) request.getSession().getAttribute(Param.user);
         if(a.getPermission()>1){
-            Optional<ClasssEntity> b = classDao.findById(id);
-            if(b.isPresent()){
-                classDao.deleteById(id);
+            Example<ClasssEntity> c = Example.of(new ClasssEntity(id,a.getSchool()));
+            ClasssEntity b = classDao.findOn(id,a.getSchool());
+            if(isEmpty.isObjectNotEmpty(b)){
+                classDao.delete(b);
                 logger.error(a.toString()+"IP地址："+request.getRemoteAddr()+"********删除了班级******"+id );
                 return new ResultVo(1,"操作成功",null);
             }
